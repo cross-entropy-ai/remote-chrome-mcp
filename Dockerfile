@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     x11vnc \
     curl \
-    wget \
     ca-certificates \
     gnupg && \
     rm -rf /var/lib/apt/lists/*

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -ex
 
-CHROME_ARGS="--password-store=basic --no-sandbox --ignore-gpu-blocklist --disable-dev-shm-usage --user-data-dir --no-first-run --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'"
-
 apt-get update
 
 # Ubuntu Noble: install from Debian bookworm repos
