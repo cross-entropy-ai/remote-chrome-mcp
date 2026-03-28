@@ -33,6 +33,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY agent/install/install_chromium.sh /tmp/install_chromium.sh
 RUN bash /tmp/install_chromium.sh && rm /tmp/install_chromium.sh
 
+### Install mcp-proxy
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip pipx && \
+    rm -rf /var/lib/apt/lists/* && \
+    pipx install mcp-proxy && \
+    ln -s /root/.local/bin/mcp-proxy /usr/local/bin/mcp-proxy
+
 ### Cleanup
 RUN apt-get autoremove -y && apt-get autoclean -y && \
     rm -rf /var/lib/apt/lists/* /var/tmp/*
