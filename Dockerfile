@@ -1,13 +1,3 @@
-#### Build Stage — gateway binary ####
-FROM golang:1.26 AS builder
-
-WORKDIR /src
-COPY go.mod ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /bin/remote-chrome-mcp ./cmd/main.go
-
-#### Runtime Stage ####
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -47,23 +37,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 python3
     rm -rf /var/lib/apt/lists/* && \
     PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install mcp-proxy
 
+### Install Caddy
+RUN curl -fsSL "https://caddyserver.com/api/download?os=linux&arch=$(dpkg --print-architecture)" -o /usr/local/bin/caddy && \
+    chmod +x /usr/local/bin/caddy
+
 ### Cleanup
 RUN apt-get autoremove -y && apt-get autoclean -y && \
     rm -rf /var/lib/apt/lists/* /var/tmp/*
 
-### Install gateway binary
-COPY --from=builder /bin/remote-chrome-mcp /usr/local/bin/remote-chrome-mcp
-
-### Copy supervisord config
+### Copy Caddyfile and supervisord config
+COPY agent/Caddyfile /etc/caddy/Caddyfile
 COPY agent/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 ### Create Chrome user data directory (mountable)
 RUN mkdir -p /home/rcm/chrome && chown rcm:rcm /home/rcm/chrome
 
+### Create Caddy data/config directories
+RUN mkdir -p /data/caddy /config/caddy
+
 ### Create log directories
 RUN mkdir -p /var/log/supervisor
 
-### 8080 = gateway (MCP proxy with token auth), 5900 = VNC
-EXPOSE 8080 5900
+### 80 = HTTP (or ACME), 443 = HTTPS, 5900 = VNC
+EXPOSE 80 443 5900
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

@@ -3,14 +3,18 @@ services:
     build: .
     image: remote-chrome-mcp
     ports:
-      - "8080:8080"
+      - "80:80"
+      - "443:443"
       - "5900:5900"
     environment:
       - AUTH_TOKEN=${AUTH_TOKEN:-changeme}
       - VNC_PASSWORD=${VNC_PASSWORD:-changeme}
+      - TLS_DOMAIN=${TLS_DOMAIN:-}
     volumes:
       - chrome-data:/home/rcm/chrome
+      - caddy-data:/data
       - /dev/shm:/dev/shm
 
 volumes:
   chrome-data:
+  caddy-data:
