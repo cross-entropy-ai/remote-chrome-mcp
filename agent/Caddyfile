@@ -1,4 +1,4 @@
-{$TLS_DOMAIN::80} {
+{$TLS_DOMAIN} {
 	@unauthorized not query token={$AUTH_TOKEN}
 	respond @unauthorized "Unauthorized" 401
 

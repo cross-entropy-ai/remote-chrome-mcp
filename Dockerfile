@@ -45,9 +45,10 @@ RUN curl -fsSL "https://caddyserver.com/api/download?os=linux&arch=$(dpkg --prin
 RUN apt-get autoremove -y && apt-get autoclean -y && \
     rm -rf /var/lib/apt/lists/* /var/tmp/*
 
-### Copy Caddyfile and supervisord config
+### Copy Caddyfile, supervisord config, and entrypoint
 COPY agent/Caddyfile /etc/caddy/Caddyfile
 COPY agent/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY agent/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ### Create Chrome user data directory (mountable)
 RUN mkdir -p /home/rcm/chrome && chown rcm:rcm /home/rcm/chrome
@@ -61,4 +62,5 @@ RUN mkdir -p /var/log/supervisor
 ### 80 = HTTP (or ACME), 443 = HTTPS, 5900 = VNC
 EXPOSE 80 443 5900
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
