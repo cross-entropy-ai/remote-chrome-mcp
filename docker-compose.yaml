@@ -1,0 +1,16 @@
+services:
+  remote-chrome-mcp:
+    build: .
+    image: remote-chrome-mcp
+    ports:
+      - "8080:8080"
+      - "5900:5900"
+    environment:
+      - AUTH_TOKEN=${AUTH_TOKEN:-changeme}
+      - VNC_PASSWORD=${VNC_PASSWORD:-changeme}
+    volumes:
+      - chrome-data:/home/rcm/chrome
+      - /dev/shm:/dev/shm
+
+volumes:
+  chrome-data:
