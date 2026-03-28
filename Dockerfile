@@ -1,3 +1,12 @@
+#### Build Stage — gateway binary ####
+FROM golang:1.26 AS builder
+
+WORKDIR /src
+COPY go.mod ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /bin/remote-chrome-mcp ./cmd/main.go
+
 #### Runtime Stage ####
 FROM ubuntu:24.04
 
@@ -32,12 +41,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 ### Install mcp-proxy (Python)
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip pipx && \
     rm -rf /var/lib/apt/lists/* && \
-    pipx install mcp-proxy && \
-    ln -s /root/.local/bin/mcp-proxy /usr/local/bin/mcp-proxy
+    PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install mcp-proxy
 
 ### Cleanup
 RUN apt-get autoremove -y && apt-get autoclean -y && \
     rm -rf /var/lib/apt/lists/* /var/tmp/*
+
+### Install gateway binary
+COPY --from=builder /bin/remote-chrome-mcp /usr/local/bin/remote-chrome-mcp
 
 ### Copy supervisord config
 COPY agent/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -48,7 +59,7 @@ RUN mkdir -p /home/rcm/chrome && chown rcm:rcm /home/rcm/chrome
 ### Create log directories
 RUN mkdir -p /var/log/supervisor
 
-### 6080 = noVNC, 3000 = MCP proxy (HTTP/SSE)
-EXPOSE 6080 3000
+### 8080 = gateway (reverse proxy with token auth)
+EXPOSE 8080
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
