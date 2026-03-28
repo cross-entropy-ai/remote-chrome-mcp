@@ -21,8 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
     xvfb \
     x11vnc \
-    novnc \
-    websockify \
     curl \
     wget \
     ca-certificates \
@@ -59,7 +57,7 @@ RUN mkdir -p /home/rcm/chrome && chown rcm:rcm /home/rcm/chrome
 ### Create log directories
 RUN mkdir -p /var/log/supervisor
 
-### 8080 = gateway (reverse proxy with token auth)
-EXPOSE 8080
+### 8080 = gateway (MCP proxy with token auth), 5900 = VNC
+EXPOSE 8080 5900
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

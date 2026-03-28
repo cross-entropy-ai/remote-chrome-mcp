@@ -6,7 +6,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -21,42 +20,17 @@ func main() {
 	}
 
 	mcpTarget, _ := url.Parse("http://127.0.0.1:3000")
-	vncTarget, _ := url.Parse("http://127.0.0.1:6080")
+	mcpProxy := httputil.NewSingleHostReverseProxy(mcpTarget)
+	mcpProxy.FlushInterval = -1
 
-	mcpProxy := newFlushingProxy(mcpTarget)
-	vncProxy := newFlushingProxy(vncTarget)
-
-	mux := http.NewServeMux()
-
-	// /vnc/ → noVNC, no auth
-	mux.HandleFunc("/vnc/", func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/vnc")
-		if r.URL.Path == "" {
-			r.URL.Path = "/"
-		}
-		vncProxy.ServeHTTP(w, r)
-	})
-
-	// /websockify → noVNC websocket, no auth
-	mux.HandleFunc("/websockify", func(w http.ResponseWriter, r *http.Request) {
-		vncProxy.ServeHTTP(w, r)
-	})
-
-	// everything else → mcp-proxy, requires token
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("token") != token {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 		mcpProxy.ServeHTTP(w, r)
-	})
+	}
 
 	log.Printf("listening on %s", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, mux))
-}
-
-func newFlushingProxy(target *url.URL) *httputil.ReverseProxy {
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.FlushInterval = -1 // flush immediately for SSE
-	return proxy
+	log.Fatal(http.ListenAndServe(listenAddr, http.HandlerFunc(handler)))
 }
