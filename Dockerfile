@@ -30,6 +30,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY agent/install/install_chromium.sh /tmp/install_chromium.sh
 RUN bash /tmp/install_chromium.sh && rm /tmp/install_chromium.sh
 
+### Install Chinese font support
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra && \
+    rm -rf /var/lib/apt/lists/* && \
+    fc-cache -fv
+
 ### Install Node.js (for chrome-devtools-mcp via npx)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
